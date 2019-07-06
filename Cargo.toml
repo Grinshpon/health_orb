@@ -1,0 +1,13 @@
+[package]
+name = "grafx"
+version = "0.1.0"
+authors = ["grinshpon <grinshpondaniel@protonmail.com>"]
+edition = "2018"
+
+[dependencies]
+num = "0.2.0"
+
+[dependencies.sdl2]
+version = "0.32.2"
+default-features = false
+features = ["image"]
