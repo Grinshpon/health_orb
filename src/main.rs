@@ -6,7 +6,7 @@ use crate::entity::*;
 use std::process;
 use std::path::Path;
 use std::time::Duration;
-//use std::collections;
+use std::collections::HashMap;
 
 use sdl2::pixels::Color;
 use sdl2::event::Event;
@@ -27,6 +27,20 @@ macro_rules! texture {
       .expect("Error creating texture")
   }}
 }
+macro_rules! hashmap {
+  ( $( $key: expr => $val:expr ),* ) => {{
+    let mut temp = HashMap::new();
+    $(
+      temp.insert($key,$val);
+    )*
+    temp
+  }}
+}
+macro_rules! get {
+  ( $map:expr, $key: expr ) => {(
+    $map.get_mut($key).unwrap()
+  )}
+}
 
 fn main() {
   init();
@@ -45,44 +59,58 @@ fn init() {
   run(&mut canvas, &mut event_pump);
 }
 
-fn draw_entities(canvas: &mut Canvas<Window>, entities: &Vec<Entity>) {
-  for entity in entities.iter() {
-    canvas.copy(&entity.obj,Some(entity.src),Some(entity.dst()))
-      .expect("Error loading texture");
+fn draw_entities(canvas: &mut Canvas<Window>, entities: &HashMap<&str, Entity>, textures: &HashMap<&str, Texture>) {
+  let pool: Vec<&Entity> = {
+    let mut temp: Vec<(&&str, &Entity)> = entities.iter().collect();
+    temp.sort_by(|(_,va),(_,vb)| vb.z.cmp(&va.z));
+    temp.into_iter().map(|(_,e)| e).rev().collect() // There's definitely a better way to do this.
+    //temp
+  };
+  for entity in pool.iter() {
+    canvas.copy(&textures[entity.img],Some(entity.src),Some(entity.dst()))
+      .expect("Error rendering textures");
   }
+/*  for entity in entities.values() {
+    canvas.copy(&textures[entity.img],Some(entity.src),Some(entity.dst()))
+      .expect("Error loading texture");
+  }*/
 }
 
 fn run(canvas: &mut Canvas<Window>, event_pump: &mut EventPump) {
     let texture_creator = canvas.texture_creator();
 /*
   let mut entity_orb = Entity {
-    obj: texture!(texture_creator,Path::new("assets/globe.png")),
+    img: texture!(texture_creator,Path::new("assets/globe.png")),
     z: 10,
     src: Rect::new(0,0,64,64),
     dst: Rect::new(10,0,512,512)
   };
   let mut entity_hp = Entity {
-    obj: texture!(texture_creator,Path::new("assets/globefill.png")),
+    img: texture!(texture_creator,Path::new("assets/globefill.png")),
     z: 9,
     src: Rect::new(0,0,64,64),
     dst: Rect::new(10,0,512,512)
   };
   let mut entities = vec![&entity_hp, &entity_orb];
 */
-  let mut entities = vec![ //use hashmap instead so we can name entities. Then they will be put into a sorted reference pool then drawn.
-    Entity {
-      obj: texture!(texture_creator,Path::new("assets/globefill.png")),
-      z: 9,
-      src: Rect::new(0,0,64,64),
-      dst: Rect::new(10,0,512,512)
-    },
-    Entity {
-      obj: texture!(texture_creator,Path::new("assets/globe.png")),
-      z: 10,
-      src: Rect::new(0,0,64,64),
-      dst: Rect::new(10,0,512,512)
-    }
-  ];
+  let mut textures = hashmap!
+    [ "texture_orb" => texture!(texture_creator,Path::new("assets/globe.png"))
+    , "texture_bar" => texture!(texture_creator,Path::new("assets/globefill.png"))
+    ];
+  let mut entities = hashmap!
+    [ "bar" => Entity
+      ( "texture_bar"
+      , 9
+      , Rect::new(0,0,64,64)
+      , Rect::new(10,0,512,512)
+      )
+    , "orb" => Entity
+      ( "texture_orb"
+      , 10
+      , Rect::new(0,0,64,64)
+      , Rect::new(10,0,512,512)
+      )
+    ];
 /*
   let frame_orb = Rect::new(10,0,512,512);
   // 0,32,64,32
@@ -106,10 +134,10 @@ fn run(canvas: &mut Canvas<Window>, event_pump: &mut EventPump) {
       frame_health.y = 512 - (fhp as i32 * 8);
       frame_health.set_height(fhp as u32 * 8);
 */
-      entities[0].src.y = 64 - fhp as i32;
-      entities[0].src.set_height(fhp as u32);
-      entities[0].dst.y = 512 - (fhp as i32 * 8);
-      entities[0].dst.set_height(fhp as u32 * 8);
+      get!(entities,&"bar").src.y = 64 - fhp as i32;
+      get!(entities,&"bar").src.set_height(fhp as u32);
+      get!(entities,&"bar").setY(512 - (fhp as i32 * 8));
+      get!(entities,&"bar").set_height(fhp as u32 * 8);
       //println!("{:?}\t{:?}", entities[0].src,entities[0].dst);
 /*
       entity_hp.src.y = 64 - fhp as i32;
@@ -129,7 +157,7 @@ fn run(canvas: &mut Canvas<Window>, event_pump: &mut EventPump) {
     // The rest of the game loop goes here...
     //canvas.copy(&, Some(health), Some(frame_health)).expect("Error drawing texture");
     //canvas.copy(&texture_orb, None, Some(frame_orb)).expect("Error drawing texture");
-    draw_entities(canvas, &entities);
+    draw_entities(canvas, &entities, &textures);
     canvas.present();
     std::thread::sleep(Duration::new(0, 1_000_000_000u32 / 30));
   };

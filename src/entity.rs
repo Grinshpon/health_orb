@@ -1,14 +1,23 @@
 extern crate sdl2;
 //pub mod vector;
 //use crate::vector::{Vector3,Vector2};
-use sdl2::render::Texture;
+//use sdl2::render::Texture;
 use sdl2::rect::Rect;
 
 pub struct Entity<'a> {
-  pub obj: Texture<'a>,
+  pub img: &'a str,
   pub z: i32,
   pub src: Rect,
   pub dst: Rect
+}
+#[allow(non_snake_case)]
+pub fn Entity<'a>(img: &'a str, z: i32, src: Rect, dst: Rect) -> Entity {
+  Entity
+  { img
+  , z
+  , src
+  , dst
+  }
 }
 impl <'a> Entity<'a> {
   pub fn x(&self) -> i32 {
@@ -39,7 +48,7 @@ impl <'a> Entity<'a> {
     self.dst.set_width(n);
   }
   pub fn set_height(&mut self, n: u32) {
-    self.dst.set_width(n);
+    self.dst.set_height(n);
   }
   pub fn set_dim(&mut self, n: u32, m: u32) {
     self.set_width(n);
