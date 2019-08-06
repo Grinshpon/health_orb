@@ -53,7 +53,6 @@ fn init() {
       .position_centered()
       .build()
       .unwrap();
-
   let mut canvas = window.into_canvas().build().unwrap();
   let mut event_pump = sdl_context.event_pump().unwrap();
   run(&mut canvas, &mut event_pump);
@@ -75,11 +74,11 @@ fn draw_entities(canvas: &mut Canvas<Window>, entities: &HashMap<&str, Entity>, 
 fn run(canvas: &mut Canvas<Window>, event_pump: &mut EventPump) {
   let texture_creator = canvas.texture_creator();
   let mut textures = hashmap!
-    [ "texture_orb" => texture!(texture_creator,Path::new("assets/globe.png"))
+    { "texture_orb" => texture!(texture_creator,Path::new("assets/globe.png"))
     , "texture_bar" => texture!(texture_creator,Path::new("assets/globefill.png"))
-    ];
+    };
   let mut entities = hashmap!
-    [ "bar" => Entity
+    { "bar" => Entity
       ( "texture_bar"
       , 9
       , Rect::new(0,0,64,64)
@@ -91,7 +90,7 @@ fn run(canvas: &mut Canvas<Window>, event_pump: &mut EventPump) {
       , Rect::new(0,0,64,64)
       , Rect::new(10,0,512,512)
       )
-    ];
+    };
 
   let mut hp: u32 = 98;
   let mut fhp: f32 = 64.0 * ((hp as f32)/100.0);
@@ -103,25 +102,31 @@ fn run(canvas: &mut Canvas<Window>, event_pump: &mut EventPump) {
     if fhp > 31.0 { //min visibility at 4, 1 down on 96, fhp: 3.0 - 62.0
       hp -= 1;
       fhp = 64.0 * (hp as f32/100.0);
-      get!(entities,&"bar").src.y = 64 - fhp as i32;
-      get!(entities,&"bar").src.set_height(fhp as u32);
-      get!(entities,&"bar").setY(512 - (fhp as i32 * 8));
-      get!(entities,&"bar").set_height(fhp as u32 * 8);
+      get!(entities,"bar").src.y = 64 - fhp as i32;
+      get!(entities,"bar").src.set_height(fhp as u32);
+      get!(entities,"bar").setY(512 - (fhp as i32 * 8));
+      get!(entities,"bar").set_height(fhp as u32 * 8);
     }
     canvas.clear();
-    for event in event_pump.poll_iter() {
-      match event {
-        Event::Quit {..} |
-        Event::KeyDown { keycode: Some(Keycode::Escape), .. } => {
-          process::exit(1);
-        },
-        _ => {}
-      }
-    }
+    event_handler(event_pump);
+
     // The rest of the game loop goes here...
     draw_entities(canvas, &entities, &textures);
     canvas.present();
+    //temporary frame limiter
     std::thread::sleep(Duration::new(0, 1_000_000_000u32 / 30));
   };
   loop {update();}
+}
+
+fn event_handler(event_pump: &mut EventPump) {
+  for event in event_pump.poll_iter() {
+    match event {
+      Event::Quit {..} |
+      Event::KeyDown { keycode: Some(Keycode::Escape), .. } => {
+        process::exit(1);
+      },
+      _ => {}
+    }
+  }
 }
